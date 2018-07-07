@@ -33,6 +33,7 @@ public class Luban implements Handler.Callback {
   private OnCompressListener mCompressListener;
   private CompressionPredicate mCompressionPredicate;
   private List<InputStreamProvider> mStreamProviders;
+  private long mByteSize;
 
   private Handler mHandler;
 
@@ -43,6 +44,7 @@ public class Luban implements Handler.Callback {
     this.mCompressListener = builder.mCompressListener;
     this.mLeastCompressSize = builder.mLeastCompressSize;
     this.mCompressionPredicate = builder.mCompressionPredicate;
+    this.mByteSize = builder.mByteSize;
     mHandler = new Handler(Looper.getMainLooper(), this);
   }
 
@@ -149,7 +151,7 @@ public class Luban implements Handler.Callback {
    * start compress and return the file
    */
   private File get(InputStreamProvider input, Context context) throws IOException {
-    return new Engine(input, getImageCacheFile(context, Checker.SINGLE.extSuffix(input)), focusAlpha).compress();
+    return new Engine(input, getImageCacheFile(context, Checker.SINGLE.extSuffix(input)), focusAlpha, mByteSize).compress();
   }
 
   private List<File> get(Context context) throws IOException {
@@ -177,13 +179,13 @@ public class Luban implements Handler.Callback {
     if (mCompressionPredicate != null) {
       if (mCompressionPredicate.apply(path.getPath())
           && Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath())) {
-        result = new Engine(path, outFile, focusAlpha).compress();
+        result = new Engine(path, outFile, focusAlpha, mByteSize).compress();
       } else {
         result = new File(path.getPath());
       }
     } else {
       result = Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) ?
-          new Engine(path, outFile, focusAlpha).compress() :
+          new Engine(path, outFile, focusAlpha, mByteSize).compress() :
           new File(path.getPath());
     }
 
@@ -217,6 +219,7 @@ public class Luban implements Handler.Callback {
     private OnCompressListener mCompressListener;
     private CompressionPredicate mCompressionPredicate;
     private List<InputStreamProvider> mStreamProviders;
+    private long mByteSize;
 
     Builder(Context context) {
       this.context = context;
@@ -342,6 +345,15 @@ public class Luban implements Handler.Callback {
       return this;
     }
 
+    /**
+     * limit compressed file size, not accurate, has deviation
+     *
+     * @param byteSize compressed file size, unit byte
+     */
+    public Builder limitByteSize(long byteSize) {
+      this.mByteSize = byteSize;
+      return this;
+    }
 
     /**
      * begin compress image with asynchronous

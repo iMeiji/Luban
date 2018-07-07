@@ -18,11 +18,13 @@ class Engine {
   private int srcWidth;
   private int srcHeight;
   private boolean focusAlpha;
+  private long byteSize;
 
-  Engine(InputStreamProvider srcImg, File tagImg, boolean focusAlpha) throws IOException {
+  Engine(InputStreamProvider srcImg, File tagImg, boolean focusAlpha, long byteSize) throws IOException {
     this.tagImg = tagImg;
     this.srcImg = srcImg;
     this.focusAlpha = focusAlpha;
+    this.byteSize = byteSize;
 
     BitmapFactory.Options options = new BitmapFactory.Options();
     options.inJustDecodeBounds = true;
@@ -76,7 +78,28 @@ class Engine {
     if (Checker.SINGLE.isJPG(srcImg.open())) {
       tagBitmap = rotatingImage(tagBitmap, Checker.SINGLE.getOrientation(srcImg.open()));
     }
-    tagBitmap.compress(focusAlpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 60, stream);
+
+    int quality = 100;
+
+    if (focusAlpha) {
+      tagBitmap.compress(Bitmap.CompressFormat.PNG, quality, stream);
+    } else {
+      if (byteSize == 0) {
+        tagBitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream);
+      } else {
+        tagBitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream);
+        long dataSize = stream.toByteArray().length;
+        if (dataSize / byteSize >= 5) {
+          quality = 60;
+        }
+        while (quality > 30 && dataSize > byteSize) {
+          quality = (int) (quality * 0.85);
+          stream.reset();
+          tagBitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream);
+          dataSize = stream.toByteArray().length;
+        }
+      }
+    }
     tagBitmap.recycle();
 
     FileOutputStream fos = new FileOutputStream(tagImg);

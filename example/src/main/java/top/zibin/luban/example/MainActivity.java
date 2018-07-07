@@ -139,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
             return Luban.with(MainActivity.this)
                 .setTargetDir(getPath())
                 .load(list)
+                .limitByteSize(500 * 1024)
                 .get();
           }
         })
@@ -188,7 +189,8 @@ public class MainActivity extends AppCompatActivity {
         })
         .setCompressListener(new OnCompressListener() {
           @Override
-          public void onStart() { }
+          public void onStart() {
+          }
 
           @Override
           public void onSuccess(File file) {
@@ -197,7 +199,8 @@ public class MainActivity extends AppCompatActivity {
           }
 
           @Override
-          public void onError(Throwable e) { }
+          public void onError(Throwable e) {
+          }
         }).launch();
   }
 
